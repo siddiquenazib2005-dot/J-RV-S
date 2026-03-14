@@ -13,14 +13,17 @@ from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 
 # Internal modules
-from orchestrator import orchestrate, detect_intent
-from tools.ai_brain import chat, analyze_image
-from tools.web_tools import get_weather, get_news, web_search, wikipedia_search, convert_currency, get_stock
-from tools.memory import (
-    save_message, get_history, save_memory, get_memories, purge_memories,
-    save_note, get_notes, save_task, get_tasks
-)
-from tools.file_tools import process_uploaded_file
+try:
+    from orchestrator import orchestrate, detect_intent, format_tool_result, build_system_prompt
+    from tools.ai_brain import chat, analyze_image
+    from tools.web_tools import get_weather, get_news, web_search, wikipedia_search, convert_currency, get_stock
+    from tools.memory import (
+        save_message, get_history, save_memory, get_memories, purge_memories,
+        save_note, get_notes, save_task, get_tasks
+    )
+    from tools.file_tools import process_uploaded_file
+except Exception as e:
+    print(f"Import error: {e}")
 
 app = Flask(__name__)
 CORS(app)
@@ -111,7 +114,6 @@ def chat_endpoint():
         # Step 4: Build tool context
         tool_context = orchestration.get("tool_context", "")
         if tool_result:
-            from orchestrator import format_tool_result
             tool_context = format_tool_result(intent, tool_result)
 
         # Step 5: Get chat history
@@ -156,7 +158,6 @@ def upload_file():
 
         # If image → use Vision
         if file_data["type"] == "image":
-            from orchestrator import build_system_prompt
             system_prompt = build_system_prompt("image", user_name)
             ai_response = analyze_image(
                 image_data=file_data["content"],
@@ -166,7 +167,6 @@ def upload_file():
             )
         else:
             # Inject file content as context
-            from orchestrator import build_system_prompt
             system_prompt = build_system_prompt("pdf", user_name)
             file_context = f"File: {filename}\n\nContent:\n{file_data['content']}"
             history = [{"role": "user", "content": f"{file_context}\n\n{user_message}"}]
