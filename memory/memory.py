@@ -13,7 +13,7 @@ except ImportError:
     SUPABASE_AVAILABLE = False
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "") or os.environ.get("SUPABASE_KEY", "")
 
 def get_client():
     if SUPABASE_AVAILABLE and SUPABASE_URL and SUPABASE_KEY:
