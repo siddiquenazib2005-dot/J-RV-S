@@ -3,7 +3,15 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="theme-color" content="#000000"/>
+<meta name="theme-color" content="#00f5ff"/>
+<link rel="manifest" href="/static/manifest.json"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="J-RV-S"/>
+<link rel="apple-touch-icon" href="/static/icon-192.png"/>
+<meta name="msapplication-TileImage" content="/static/icon-192.png"/>
+<meta name="msapplication-TileColor" content="#020408"/>
 <title>J-RV-S — AI System</title>
 <link rel="manifest" href="/static/manifest.json"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -747,6 +755,7 @@
   </div>
 
   <div class="header-actions">
+    <button id="installBtn" onclick="installPWA()" title="Install App" style="display:none;width:32px;height:32px;background:rgba(0,245,255,0.15);border:1px solid var(--cyan);color:var(--cyan);border-radius:4px;cursor:pointer;align-items:center;justify-content:center;font-size:14px;">📲</button>
     <button class="icon-btn" onclick="clearChat()" title="Clear Chat">🗑</button>
     <button class="icon-btn" onclick="showSettings()" title="Settings">⚙</button>
     <button class="icon-btn" onclick="toggleSidebar()" title="Menu">☰</button>
@@ -1331,6 +1340,37 @@ function setMode(mode) {
   else if (mode === 'tasks') addMessage('✅ Tasks mode. Use sidebar to add tasks.', 'ai');
   else if (mode === 'memory') { addMessage('🧠 Loading memories...', 'ai'); loadMemories(); }
 }
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/static/sw.js')
+      .then(reg => console.log('SW registered'))
+      .catch(err => console.log('SW error:', err));
+  });
+}
+
+// PWA Install prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBtn').style.display = 'flex';
+});
+
+function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      document.getElementById('installBtn').style.display = 'none';
+    });
+  }
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBtn').style.display = 'none';
+});
 </script>
 </body>
 </html>
