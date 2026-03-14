@@ -217,9 +217,18 @@ def get_weather(city="Delhi"):
 
 def get_news(query="India"):
     try:
-        r = requests.get(f"https://newsapi.org/v2/everything?q={query}&sortBy=publishedAt&pageSize=5&apiKey={NEWS_KEY}", timeout=5)
+        # Try top-headlines first (India, English)
+        r = requests.get(
+            f"https://newsapi.org/v2/top-headlines?country=in&pageSize=5&apiKey={NEWS_KEY}",
+            timeout=5)
         arts = r.json().get("articles", [])
-        return {"articles": [{"title": a.get("title",""), "source": a.get("source",{}).get("name","")} for a in arts[:5]]}
+        # If query is specific (not generic), use everything endpoint
+        if query.lower() not in ["india","latest","news"] and len(arts) == 0:
+            r = requests.get(
+                f"https://newsapi.org/v2/everything?q={query}&language=en&sortBy=publishedAt&pageSize=5&apiKey={NEWS_KEY}",
+                timeout=5)
+            arts = r.json().get("articles", [])
+        return {"articles": [{"title": a.get("title",""), "source": a.get("source",{}).get("name","")} for a in arts[:5] if a.get("title") and "[Removed]" not in a.get("title","")]}
     except Exception as e:
         return {"error": str(e)}
 
@@ -285,6 +294,11 @@ def process_file(file_bytes, filename, mime_type):
 # ════════════════════════════════════════════════════════════
 # ROUTES
 # ════════════════════════════════════════════════════════════
+
+@app.route("/static/sw.js")
+def service_worker():
+    return app.send_static_file("sw.js"), 200, {"Content-Type": "application/javascript", "Service-Worker-Allowed": "/"}
+
 @app.route("/")
 def index():
     return render_template("index.html")
